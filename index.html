@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Escola de Ponta - BETA P1</title>
+    <style>
+        /* CSS: DESIGN RESPONSIVO */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; color: #0f0; font-family: 'Courier New', monospace; 
+            overflow: hidden; touch-action: manipulation;
+        }
+
+        /* Menu Principal */
+        #menu-inicial {
+            position: fixed; width: 100%; height: 100%; background: black; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .btn-principal {
+            padding: 20px 40px; font-size: 1.5rem; background: #111; color: red; 
+            border: 2px solid red; cursor: pointer; margin-top: 20px;
+        }
+
+        /* Container do Jogo */
+        #game-container {
+            display: none; width: 100vw; height: 100vh; position: relative;
+            background: radial-gradient(circle, #222 0%, #000 80%);
+        }
+
+        /* Interface de Câmera */
+        #monitor {
+            width: 100%; height: 70%; display: flex; justify-content: center; 
+            align-items: center; border-bottom: 3px solid #333;
+            text-align: center; font-size: 1.5rem; position: relative;
+        }
+
+        #ui-topo {
+            position: absolute; top: 0; width: 100%; padding: 10px;
+            display: flex; justify-content: space-between; box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.8); font-weight: bold;
+        }
+
+        /* Controles (Focados em Mobile) */
+        #controles-mobile {
+            width: 100%; height: 30%; display: grid;
+            grid-template-columns: 1fr 1fr 1fr; gap: 5px; padding: 5px; box-sizing: border-box;
+        }
+
+        .btn-cam {
+            background: #1a1a1a; border: 1px solid #444; color: white;
+            font-size: 0.9rem; font-weight: bold; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .btn-cam:active { background: #444; }
+
+        /* Efeito de Estática */
+        .estatica {
+            position: absolute; width: 100%; height: 100%; opacity: 0.05;
+            background: url('https://media.giphy.com/media/oEI9uWUqnW3Fe/giphy.gif');
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu-inicial">
+        <h1 style="color: red; margin-bottom: 0;">ESCOLA DE PONTA</h1>
+        <p style="color: #666;">Versão Beta - Desenvolvido por P</p>
+        <button class="btn-principal" onclick="iniciarJogo()">ENTRAR NO SISTEMA</button>
+    </div>
+
+    <div id="game-container">
+        <div id="ui-topo">
+            <span>ENERGIA: <span id="power-val">100</span>%</span>
+            <span id="relogio">12 PM</span>
+        </div>
+
+        <div id="monitor">
+            <div class="estatica"></div>
+            <div id="display-texto">SALA DE SEGURANÇA</div>
+        </div>
+
+        <div id="controles-mobile">
+            <button class="btn-cam" onclick="mudarSala('SEGURANÇA')">OFFICE</button>
+            <button class="btn-cam" onclick="mudarSala('LABORATÓRIO')">CAM 01: LAB</button>
+            <button class="btn-cam" onclick="mudarSala('BIBLIOTECA')">CAM 02: BIBLIO</button>
+            <button class="btn-cam" onclick="mudarSala('REFEITÓRIO')">CAM 03: REF</button>
+            <button class="btn-cam" onclick="mudarSala('CORREDOR')">CAM 04: CORR</button>
+            <button class="btn-cam" style="color: red;" onclick="mudarSala('VÊNIA')">CAM 05: ???</button>
+        </div>
+    </div>
+
+    <script>
+        // LÓGICA DO JOGO (P - LEAD PROGRAMMER)
+        let energia = 100;
+        let salaAtual = "SEGURANÇA";
+        let cleitonPos = "LABORATÓRIO";
+        let jogoAtivo = false;
+
+        const somGrito = new Audio('gritos.mp3'); // O arquivo que você mencionou antes
+
+        function iniciarJogo() {
+            document.getElementById('menu-inicial').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            jogoAtivo = true;
+            
+            diminuirEnergia();
+            moverCleiton();
+        }
+
+        function mudarSala(nome) {
+            if (!jogoAtivo) return;
+            salaAtual = nome;
+            const display = document.getElementById('display-texto');
+            
+            // Verifica se Cleiton está na sala que você acabou de olhar
+            if (cleitonPos === salaAtual) {
+                display.innerHTML = `<span style="color:red">ALERTA: CLEITON DETECTADO EM: ${nome}</span>`;
+            } else {
+                display.innerHTML = `MONITORANDO: ${nome}`;
+            }
+        }
+
+        function diminuirEnergia() {
+            if (energia > 0 && jogoAtivo) {
+                energia -= 1;
+                document.getElementById('power-val').innerText = energia;
+                // Quanto mais câmeras você olha, mais rápido poderia gastar (opcional)
+                setTimeout(diminuirEnergia, 4000); 
+            } else if (energia <= 0) {
+                gameOver("A energia acabou...");
+            }
+        }
+
+        function moverCleiton() {
+            if (!jogoAtivo) return;
+
+            const salas = ["LABORATÓRIO", "BIBLIOTECA", "REFEITÓRIO", "CORREDOR", "SEGURANÇA"];
+            cleitonPos = salas[Math.floor(Math.random() * salas.length)];
+
+            console.log("Cleiton foi para: " + cleitonPos);
+
+            // Se o Cleiton chegar na segurança, é Jumpscare em 5 segundos (se não fechar a porta/vigiar)
+            if (cleitonPos === "SEGURANÇA") {
+                setTimeout(() => {
+                    if (cleitonPos === "SEGURANÇA") gameOver("CLEITON TE PEGOU!");
+                }, 5000);
+            }
+
+            setTimeout(moverCleiton, 12000); // Move a cada 12 segundos
+        }
+
+        function gameOver(msg) {
+            jogoAtivo = false;
+            alert(msg);
+            location.reload(); // Reinicia a Beta
+        }
+
+        // Atalhos de teclado para quem testar no PC
+        window.addEventListener('keydown', (e) => {
+            const keys = { '1': 'LABORATÓRIO', '2': 'BIBLIOTECA', '3': 'REFEITÓRIO', '4': 'CORREDOR', '0': 'SEGURANÇA' };
+            if (keys[e.key]) mudarSala(keys[e.key]);
+        });
+    </script>
+</body>
+</html>
